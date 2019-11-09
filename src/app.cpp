@@ -3,16 +3,40 @@
 #include "webserver.h"
 #include "webclient.h"
 
+#include <SPI.h>
+#include <BME280SpiSw.h>
+
+
 bool wifiConnect(void);
 int WifiHandleConn(boolean setup = false);
 
 void configMode(void);
 
-#define pinLED   05  // this is the on-board LED - write this LOW to turn on
-#define pinDONE  15  // write this PIN HIGH to kill your own power
-#define pinWAKE  16 // check this pin right when you boot up to see if the external switch woke you up - will be LOW if externally woken
+#define pinLED      05  // this is the on-board LED - write this LOW to turn on
+#define pinDONE     15  // write this PIN HIGH to kill your own power
+#define pinWAKE     16 // check this pin right when you boot up to see if the external switch woke you up - will be LOW if externally woken
+
+#define pinSPI_CSn  04
+#define pinSPI_SCLK 14
+#define pinSPI_MOSI 13
+#define pinSPI_MISO 12
 
 #define VBATT_MIN 3.4
+
+BME280SpiSw::Settings bme_settings
+(
+  pinSPI_CSn, 
+  pinSPI_MOSI, 
+  pinSPI_MISO, 
+  pinSPI_SCLK,
+  BME280::OSR_X16, // Temp
+  BME280::OSR_X16, // Humidity
+  BME280::OSR_X16, // Pressure
+  BME280::Mode_Forced,
+  BME280::StandbyTime_1000ms,
+  BME280::Filter_16
+);
+BME280SpiSw bme(bme_settings);
 
 void powerOff(uint16_t d)
 {
@@ -36,6 +60,16 @@ void setup()
   sysinfo.vBatt = (4 - 3.5)/(712 - 621) ;
   sysinfo.vBatt = analogRead(A0) * sysinfo.vBatt + (4 - sysinfo.vBatt * 712);
 
+#ifdef HAS_BME280
+  if(bme.begin())
+  {
+    delay(100);
+    bme.read(sysinfo.pressure, sysinfo.temperature, sysinfo.humidity, 
+              BME280::TempUnit_Celsius, BME280::PresUnit_hPa);
+    
+  }
+#endif
+
   dbgInit();
   cfgInit();
 
@@ -45,11 +79,15 @@ void setup()
   dbgF("App "); dbgF(__version); dbgF(EOL);
   dbg_s("Wake source: %s" EOL, extWake ? "External": "Timer"); 
   dbg_s("vBatt: %f" EOL, sysinfo.vBatt);
+#ifdef HAS_BME280
+  dbg_s("T %+7.3f°C P %+7.3fhPa %6.2f%%Hum" EOL,
+          sysinfo.temperature, sysinfo.pressure, sysinfo.humidity);
+#endif
   dbgFlush();
 
   if (extWake ||
-      sysinfo.vBatt < VBATT_MIN
-     ) 
+        sysinfo.vBatt < VBATT_MIN
+      ) 
   {
     // Connect to Wifi
     dbgF("Connect to Wifi" EOL);
@@ -81,7 +119,7 @@ bool wifiConnect(void)
 {
   if (!(*config.ssid))
     return false;
-  int ret=0;
+  int ret = WiFi.status();
 
   uint16_t timeout = 500; // 25 * 200 ms = 5 sec time out
   #ifdef DEBUG_APP_WIFI

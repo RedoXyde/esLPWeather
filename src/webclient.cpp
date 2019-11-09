@@ -71,18 +71,31 @@ boolean reportPost(void)
   String p = "{";
   // Message
   p += "\"message\":\"";
-  p += "HelloWorld";
+  p += config.report.msg;
   p += "\",";
   
   // vBatt
   p += "\"battery\":";
   p += sysinfo.vBatt;
+
+#ifdef HAS_BME280
   p += ",";
 
   // Temperature
   p += "\"temperature\":";
-  p += sysinfo.temp;
+  p += sysinfo.temperature;
+  p += ",";
+
+  // Pressure
+  p += "\"pressure\":";
+  p += sysinfo.pressure;
+  p += ",";
+
+  // Humidity
+  p += "\"humidity\":";
+  p += sysinfo.humidity;
   p += "";
+#endif
 
   p += "}";
   return httpPost(config.report.host, config.report.port,

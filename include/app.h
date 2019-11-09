@@ -18,7 +18,9 @@ extern "C" {
 typedef struct
 {
   float  vBatt;
-  float  temp;
+  float  temperature;
+  float  pressure;
+  float  humidity;
 } _sysinfo;
 
 // Exported variables/object instancied in main sketch

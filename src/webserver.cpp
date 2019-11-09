@@ -12,6 +12,8 @@ const char FP_NL[] PROGMEM = "\r\n";
 
 ESP8266WebServer server(80);
 
+void spiffsJSONTable();
+
 
 void webserverInit(void)
 {
@@ -20,6 +22,7 @@ void webserverInit(void)
   server.on("/config_form.json", handleFormConfig);
   server.on("/system.json", sysJSONTable);
   server.on("/config.json", confJSONTable);
+  server.on("/spiffs.json", spiffsJSONTable);
   server.on("/wifiscan.json", wifiScanJSON);
   server.on("/factory_reset", handleFactoryReset);
   server.on("/reset", handleReset);
@@ -201,12 +204,9 @@ void handleFormConfig(void)
     // Report
     strncpy(config.report.host,   server.arg("report_host").c_str(),  CFG_REPORT_HOST_SIZE );
     strncpy(config.report.url,    server.arg("report_url").c_str(),   CFG_REPORT_URL_SIZE );
+    strncpy(config.report.msg,    server.arg("report_msg").c_str(),   CFG_REPORT_MSG_SIZE );
     itemp = server.arg("report_port").toInt();
     config.report.port = (itemp>=0 && itemp<=65535) ? itemp : CFG_REPORT_DEFAULT_PORT ;
-    itemp = server.arg("report_freq").toInt();
-    if (itemp < 0 || itemp > 86400)
-      itemp = 0;
-    config.report.freq = itemp;
 
     if ( cfgSave() ) {
       ret = 200;
@@ -310,6 +310,22 @@ void getSysJSONData(String & response)
   response += "up";
   response += "\"},\r\n";
 
+  response += "{\"na\":\"Battery (V)\",\"va\":\"";
+  response += sysinfo.vBatt;
+  response += "\"},\r\n";
+
+  response += "{\"na\":\"Temperature (°C)\",\"va\":\"";
+  response += sysinfo.temperature;
+  response += "\"},\r\n";
+
+  response += "{\"na\":\"Pressure (hPa)\",\"va\":\"";
+  response += sysinfo.pressure;
+  response += "\"},\r\n";
+
+  response += "{\"na\":\"Humidity (%)\",\"va\":\"";
+  response += sysinfo.humidity;
+  response += "\"},\r\n";
+
   response += "{\"na\":\"Version\",\"va\":\"" __version "\"},\r\n";
 
   response += "{\"na\":\"Compile le\",\"va\":\"" __DATE__ " " __TIME__ "\"},\r\n";
@@ -390,7 +406,19 @@ void sysJSONTable()
   dbgF("Ok!" EOL);
 }
 
-
+/* ======================================================================
+Function: spiffsJSONTable
+Purpose : dump all spiffs system in JSON table format for browser
+Input   : -
+Output  : -
+Comments: -
+====================================================================== */
+void spiffsJSONTable()
+{
+  String response = "";
+  getSpiffsJSONData(response);
+  server.send ( 200, "text/json", response );
+}
 
 /* ======================================================================
 Function: getConfigJSONData
@@ -416,8 +444,7 @@ void getConfJSONData(String & r)
   r+=CFG_FORM_REPORT_HOST; r+=FPSTR(FP_QCQ); r+=config.report.host;   r+= FPSTR(FP_QCNL);
   r+=CFG_FORM_REPORT_PORT; r+=FPSTR(FP_QCQ); r+=config.report.port;   r+= FPSTR(FP_QCNL);
   r+=CFG_FORM_REPORT_URL;  r+=FPSTR(FP_QCQ); r+=config.report.url;    r+= FPSTR(FP_QCNL);
-
-  r+= F("\"");
+  r+=CFG_FORM_REPORT_MSG;  r+=FPSTR(FP_QCQ); r+=config.report.msg;    r+= F("\"");
   // Json end
   r += FPSTR(FP_JSON_END);
 

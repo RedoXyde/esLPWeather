@@ -23,5 +23,7 @@
   #define dbgflush  {}
 #endif
 
+#define HAS_BME280
 
+#define __appName "esLPWeather"
 #define __version "1.1.0"
