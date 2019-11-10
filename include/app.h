@@ -17,6 +17,7 @@ extern "C" {
 // sysinfo informations
 typedef struct
 {
+  bool   extWake;
   float  vBatt;
   float  temperature;
   float  pressure;

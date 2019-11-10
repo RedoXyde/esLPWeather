@@ -32,7 +32,6 @@ void cfgInit(void)
 
 }
 
-
 uint16_t crc16Update(uint16_t crc, uint8_t a)
 {
   int i;
@@ -172,8 +171,15 @@ void cfgShow()
   dbgF("psk      :"); dbg(config.psk); dbgF(EOL);
   dbgF("host     :"); dbg(config.host); dbgF(EOL);
   dbgF("ap_psk   :"); dbg(config.ap_psk); dbgF(EOL);
+  dbgF("===== Network" EOL);
+  dbgF("ip       :"); dbg(config.netcfg.ip); dbgF(EOL);
+  dbgF("netmask  :"); dbg(config.netcfg.msk); dbgF(EOL);
+  dbgF("gateway  :"); dbg(config.netcfg.gw); dbgF(EOL);
+  dbgF("dns      :"); dbg(config.netcfg.dns); dbgF(EOL);
+  dbgF("===== OTA" EOL);
   dbgF("OTA auth :"); dbg(config.ota_auth); dbgF(EOL);
   dbgF("OTA port :"); dbg(config.ota_port); dbgF(EOL);
+  dbgF("===== System" EOL);
   dbgF("Config   :");
   if (config.config & CFG_DEBUG)   dbgF("DEBUG ");
   dbgF(EOL);
@@ -181,6 +187,7 @@ void cfgShow()
   dbgF("host     :"); dbg(config.report.host); dbgF(EOL);
   dbgF("port     :"); dbg(config.report.port); dbgF(EOL);
   dbgF("url      :"); dbg(config.report.url); dbgF(EOL);
+  dbgF("msg      :"); dbg(config.report.msg); dbgF(EOL);
 
 }
 
@@ -191,11 +198,15 @@ void cfgReset(void)
   memset(&config, 0, sizeof(_Config));
 
   // Set default Hostname
-  sprintf_P(config.host, PSTR("WifInfo-%06X"), ESP.getChipId());
+  sprintf_P(config.host, PSTR(__appName "-%06X"), ESP.getChipId());
   strcpy_P(config.ota_auth, PSTR(DEFAULT_OTA_AUTH));
   config.ota_port = DEFAULT_OTA_PORT ;
 
   // Add other init default config here
+  strcpy_P(config.netcfg.ip , PSTR(CFG_NET_DEFAULT_IP));
+  strcpy_P(config.netcfg.gw , PSTR(CFG_NET_DEFAULT_GW));
+  strcpy_P(config.netcfg.msk, PSTR(CFG_NET_DEFAULT_MSK));
+  strcpy_P(config.netcfg.dns, PSTR(CFG_NET_DEFAULT_DNS));
 
   strcpy_P(config.report.host, CFG_REPORT_DEFAULT_HOST);
   config.report.port = CFG_REPORT_DEFAULT_PORT;

@@ -77,6 +77,12 @@ boolean reportPost(void)
   // vBatt
   p += "\"battery\":";
   p += sysinfo.vBatt;
+  p += ",";
+
+  // extWake
+  p += "\"wakeSource\":\"";
+  p += sysinfo.extWake ? "External" : "Timer";
+  p += "\"";
 
 #ifdef HAS_BME280
   p += ",";

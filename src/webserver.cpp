@@ -201,6 +201,11 @@ void handleFormConfig(void)
     itemp = server.arg("ota_port").toInt();
     config.ota_port = (itemp>=0 && itemp<=65535) ? itemp : DEFAULT_OTA_PORT ;
 
+    strncpy(config.netcfg.ip,   server.arg(CFG_FORM_NET_IP).c_str(),  CFG_IP_ADDRESS_MAX_SIZE );
+    strncpy(config.netcfg.gw,   server.arg(CFG_FORM_NET_GW).c_str(),  CFG_IP_ADDRESS_MAX_SIZE );
+    strncpy(config.netcfg.msk,   server.arg(CFG_FORM_NET_MSK).c_str(),  CFG_IP_ADDRESS_MAX_SIZE );
+    strncpy(config.netcfg.dns,   server.arg(CFG_FORM_NET_DNS).c_str(),  CFG_IP_ADDRESS_MAX_SIZE );
+
     // Report
     strncpy(config.report.host,   server.arg("report_host").c_str(),  CFG_REPORT_HOST_SIZE );
     strncpy(config.report.url,    server.arg("report_url").c_str(),   CFG_REPORT_URL_SIZE );
@@ -307,7 +312,7 @@ void getSysJSONData(String & response)
   response += F("[\r\n");
 
   response += "{\"na\":\"Uptime\",\"va\":\"";
-  response += "up";
+  response += millis()/1000;
   response += "\"},\r\n";
 
   response += "{\"na\":\"Battery (V)\",\"va\":\"";
@@ -441,10 +446,15 @@ void getConfJSONData(String & r)
   r+=CFG_FORM_OTA_AUTH;  r+=FPSTR(FP_QCQ); r+=config.ota_auth;       r+= FPSTR(FP_QCNL);
   r+=CFG_FORM_OTA_PORT;  r+=FPSTR(FP_QCQ); r+=config.ota_port;       r+= FPSTR(FP_QCNL);
 
-  r+=CFG_FORM_REPORT_HOST; r+=FPSTR(FP_QCQ); r+=config.report.host;   r+= FPSTR(FP_QCNL);
-  r+=CFG_FORM_REPORT_PORT; r+=FPSTR(FP_QCQ); r+=config.report.port;   r+= FPSTR(FP_QCNL);
-  r+=CFG_FORM_REPORT_URL;  r+=FPSTR(FP_QCQ); r+=config.report.url;    r+= FPSTR(FP_QCNL);
-  r+=CFG_FORM_REPORT_MSG;  r+=FPSTR(FP_QCQ); r+=config.report.msg;    r+= F("\"");
+  r+=CFG_FORM_NET_IP;  r+=FPSTR(FP_QCQ); r+=config.netcfg.ip;        r+= FPSTR(FP_QCNL);
+  r+=CFG_FORM_NET_GW;  r+=FPSTR(FP_QCQ); r+=config.netcfg.gw;        r+= FPSTR(FP_QCNL);
+  r+=CFG_FORM_NET_MSK;  r+=FPSTR(FP_QCQ); r+=config.netcfg.msk;      r+= FPSTR(FP_QCNL);
+  r+=CFG_FORM_NET_DNS;  r+=FPSTR(FP_QCQ); r+=config.netcfg.dns;      r+= FPSTR(FP_QCNL);
+
+  r+=CFG_FORM_REPORT_HOST; r+=FPSTR(FP_QCQ); r+=config.report.host;  r+= FPSTR(FP_QCNL);
+  r+=CFG_FORM_REPORT_PORT; r+=FPSTR(FP_QCQ); r+=config.report.port;  r+= FPSTR(FP_QCNL);
+  r+=CFG_FORM_REPORT_URL;  r+=FPSTR(FP_QCQ); r+=config.report.url;   r+= FPSTR(FP_QCNL);
+  r+=CFG_FORM_REPORT_MSG;  r+=FPSTR(FP_QCQ); r+=config.report.msg;   r+= F("\"");
   // Json end
   r += FPSTR(FP_JSON_END);
 

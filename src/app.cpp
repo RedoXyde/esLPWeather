@@ -40,7 +40,7 @@ BME280SpiSw bme(bme_settings);
 
 void powerOff(uint16_t d)
 {
-  dbgF("Poweroff attempt !" EOL);
+  dbg_s("Poweroff attempt (uptime %lds) !" EOL,millis()/1000);
   dbgFlush();
   digitalWrite(pinDONE, HIGH);
   delay(d);
@@ -53,7 +53,7 @@ void setup()
   system_update_cpu_freq(160);
 
   pinMode(pinWAKE, INPUT); 
-  bool extWake = digitalRead(pinWAKE) == LOW;
+  sysinfo.extWake = digitalRead(pinWAKE) == LOW;
   pinMode(pinDONE, OUTPUT);
   pinMode(pinLED,  OUTPUT); // Low to turn LED on
 
@@ -77,7 +77,7 @@ void setup()
   
   dbgF(EOL"" EOL"==============" EOL);
   dbgF("App "); dbgF(__version); dbgF(EOL);
-  dbg_s("Wake source: %s" EOL, extWake ? "External": "Timer"); 
+  dbg_s("Wake source: %s" EOL, sysinfo.extWake ? "External": "Timer"); 
   dbg_s("vBatt: %f" EOL, sysinfo.vBatt);
 #ifdef HAS_BME280
   dbg_s("T %+7.3f°C P %+7.3fhPa %6.2f%%Hum" EOL,
@@ -85,9 +85,11 @@ void setup()
 #endif
   dbgFlush();
 
-  if (extWake ||
+#ifndef ALWAYS_REPORT
+  if (sysinfo.extWake ||
         sysinfo.vBatt < VBATT_MIN
       ) 
+#endif
   {
     // Connect to Wifi
     dbgF("Connect to Wifi" EOL);
@@ -102,7 +104,7 @@ void setup()
   }
 
   powerOff(250);
-  dbgF("Still up ! Go into enter config Mode" EOL);
+  dbgF("Still up ! Switch to Config Mode" EOL);
   configMode();  
 }
 
@@ -129,6 +131,23 @@ bool wifiConnect(void)
   #endif
 
   WiFi.mode(WIFI_STA);
+  // Static Address ?
+  if(config.netcfg.ip[0] != 0)
+  {
+    IPAddress ip,gw,msk,dns;
+    ip.fromString(String(config.netcfg.ip));
+    gw.fromString(String(config.netcfg.gw));
+    msk.fromString(String(config.netcfg.msk));
+    dns.fromString(String(config.netcfg.dns));
+    #ifdef DEBUG_APP_WIFI
+    dbgF("Using static IP configuration" EOL);
+    dbg_s("  IP : %s" EOL,ip.toString().c_str());
+    dbg_s("  MSK: %s" EOL,msk.toString().c_str());
+    dbg_s("  GW : %s" EOL,gw.toString().c_str());
+    dbg_s("  DNS: %s" EOL,dns.toString().c_str());
+    #endif
+    WiFi.config(ip, dns, gw, msk); 
+  }
 
   // Do wa have a PSK ?
   if (*config.psk) {
